@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
   const pergunta = String(b.pergunta || '').slice(0, 500).trim();
   if (!pergunta) return res.status(400).json({ erro: 'pergunta vazia' });
   const ctx = JSON.stringify(b.contexto || {}).slice(0, 4000);
-  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
   try {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYS }] },
         contents: [{ role: 'user', parts: [{ text: `Dados calculados pelo app:\n${ctx}\n\nPergunta do usuário: ${pergunta}` }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
+        generationConfig: { maxOutputTokens: 2048 }
       })
     });
     const d = await r.json().catch(() => ({}));
