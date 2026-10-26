@@ -23,10 +23,11 @@ module.exports = async function handler(req, res) {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+      signal: AbortSignal.timeout(20000),
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYS }] },
         contents: [{ role: 'user', parts: [{ text: `Dados calculados pelo app:\n${ctx}\n\nPergunta do usuário: ${pergunta}` }] }],
-        generationConfig: { maxOutputTokens: 2048 }
+        generationConfig: { maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: 'low' } }
       })
     });
     const d = await r.json().catch(() => ({}));
