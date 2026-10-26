@@ -26,14 +26,19 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYS }] },
         contents: [{ role: 'user', parts: [{ text: `Dados calculados pelo app:\n${ctx}\n\nPergunta do usuário: ${pergunta}` }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 600 }
+        generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
       })
     });
-    const d = await r.json();
+    const d = await r.json().catch(() => ({}));
     const texto = (d?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
-    if (!r.ok || !texto) return res.status(502).json({ erro: 'ia indisponível' });
+    if (!r.ok || !texto) {
+      const motivo = d?.error?.message || d?.candidates?.[0]?.finishReason || d?.promptFeedback?.blockReason || 'resposta vazia';
+      console.error('Gemini falhou: HTTP ' + r.status + ' | modelo ' + model + ' | ' + String(motivo).slice(0, 300));
+      return res.status(502).json({ erro: 'ia indisponível', detalhe: 'HTTP ' + r.status });
+    }
     return res.status(200).json({ texto });
   } catch (e) {
+    console.error('Erro ao chamar o Gemini:', e && e.message);
     return res.status(502).json({ erro: 'ia indisponível' });
   }
 };
